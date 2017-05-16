@@ -55,21 +55,24 @@ public class TracksStructure extends WorldGenerator
         int z = (cz * 16) + 7;
         int h = y + 1; // head y level
 
-        w.setBlock(x, h, z, Blocks.air);
-        w.setBlock(x, y, z, Blocks.stone_slab);
+        if (noWater(w, x, y, z)) {
+            w.setBlock(x, h, z, Blocks.air);
+            w.setBlock(x, y, z, Blocks.stone_slab);
 
-        // and clean up some space around
-        w.setBlock(x-1, y, z-1, Blocks.air);
-        w.setBlock(x-1, h, z-1, Blocks.air);
+            // and clean up some space around
+            w.setBlock(x-1, y, z-1, Blocks.air);
+            w.setBlock(x-1, h, z-1, Blocks.air);
 
-        w.setBlock(x+1, y, z-1, Blocks.air);
-        w.setBlock(x+1, h, z-1, Blocks.air);
+            w.setBlock(x+1, y, z-1, Blocks.air);
+            w.setBlock(x+1, h, z-1, Blocks.air);
 
-        w.setBlock(x-1, y, z+1, Blocks.air);
-        w.setBlock(x-1, h, z+1, Blocks.air);
+            w.setBlock(x-1, y, z+1, Blocks.air);
+            w.setBlock(x-1, h, z+1, Blocks.air);
 
-        w.setBlock(x+1, y, z+1, Blocks.air);
-        w.setBlock(x+1, h, z+1, Blocks.air);
+            w.setBlock(x+1, y, z+1, Blocks.air);
+            w.setBlock(x+1, h, z+1, Blocks.air);
+        }
+
     }
 
     private void generateTracks(World w, int x, int y, int z){
@@ -86,9 +89,9 @@ public class TracksStructure extends WorldGenerator
     }
 
     private boolean noWater(World w, int x, int y, int z){
-        for (int l = y; l <= y + 3; l++) {
+        for (int l = y; l <= y + 2; l++) {
             // don't generate in the water or lava
-            if (w.getBlock(x, y, z) instanceof BlockLiquid) {
+            if (w.getBlock(x, l, z) instanceof BlockLiquid) {
                 return false;
             }
         }
