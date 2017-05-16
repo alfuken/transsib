@@ -1,6 +1,6 @@
 package lime.transsib;
 
-import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.*;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.WorldGenerator;
@@ -50,27 +50,40 @@ public class TracksStructure extends WorldGenerator
         }
     }
 
+    private void buildCeilingIfNeeded(World w, int x, int y, int z){
+        Block b = w.getBlock(x, y, z);
+        if (b instanceof BlockSand || b instanceof BlockGravel || b instanceof BlockSoulSand) {
+            w.setBlock(x, y, z, Blocks.fence);
+        }
+    }
+
     private void generateCrossroad(World w, int cx, int y, int cz){
         int x = (cx * 16) + 7;
         int z = (cz * 16) + 7;
+        int c = y + 2; // ceiling
         int h = y + 1; // head y level
 
         if (noWater(w, x, y, z)) {
+            buildCeilingIfNeeded(w, x, c, z);
             w.setBlock(x, h, z, Blocks.air);
             w.setBlock(x, y, z, Blocks.stone_slab);
 
             // and clean up some space around
-            w.setBlock(x-1, y, z-1, Blocks.air);
+            buildCeilingIfNeeded(w, x-1, c, z-1);
             w.setBlock(x-1, h, z-1, Blocks.air);
+            w.setBlock(x-1, y, z-1, Blocks.air);
 
-            w.setBlock(x+1, y, z-1, Blocks.air);
+            buildCeilingIfNeeded(w, x+1, c, z-1);
             w.setBlock(x+1, h, z-1, Blocks.air);
+            w.setBlock(x+1, y, z-1, Blocks.air);
 
-            w.setBlock(x-1, y, z+1, Blocks.air);
+            buildCeilingIfNeeded(w, x-1, c, z+1);
             w.setBlock(x-1, h, z+1, Blocks.air);
+            w.setBlock(x-1, y, z+1, Blocks.air);
 
-            w.setBlock(x+1, y, z+1, Blocks.air);
+            buildCeilingIfNeeded(w, x+1, c, z+1);
             w.setBlock(x+1, h, z+1, Blocks.air);
+            w.setBlock(x+1, y, z+1, Blocks.air);
         }
 
     }
@@ -83,8 +96,9 @@ public class TracksStructure extends WorldGenerator
             if (!(World.doesBlockHaveSolidTopSurface(w, x, y - 1, z))) {
                 w.setBlock(x, y - 1, z, Blocks.cobblestone);
             }
-            w.setBlock(x, y, z, Blocks.rail);
+            buildCeilingIfNeeded(w, x, y + 2, z);
             w.setBlock(x, y + 1, z, Blocks.air);
+            w.setBlock(x, y, z, Blocks.rail);
         }
     }
 
