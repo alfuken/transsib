@@ -27,18 +27,18 @@ public class TracksStructure extends WorldGenerator
     }
 
     private boolean isValidXChunk(int cx){
-        return (cx == 0 || cx % Config.frequency == 0);
+        return (cx == 0 || cx % Config.tunnel_frequency == 0);
     }
 
     private boolean isValidZChunk(int cz){
-        return (cz == 0 || cz % Config.frequency == 0);
+        return (cz == 0 || cz % Config.tunnel_frequency == 0);
     }
 
     private void generateXChunk(World w, int cx, int y, int cz){
         int x = cx * 16;
         int z = cz * 16;
         for (int tz = z; tz <= z + 16; tz++) {
-            generateTracks(w, x + 7, y, tz);
+            generateTracks(w, x + 8, y, tz, tz % Config.pumpkin_frequency == 0, Config.booster_frequency > 0 && tz % Config.booster_frequency == 0);
         }
     }
 
@@ -46,69 +46,102 @@ public class TracksStructure extends WorldGenerator
         int x = cx * 16;
         int z = cz * 16;
         for (int tx = x; tx <= x + 16; tx++) {
-            generateTracks(w, tx, y, z + 7);
+            generateTracks(w, tx, y, z + 8, tx % Config.pumpkin_frequency == 0, Config.booster_frequency > 0 && tx % Config.booster_frequency == 0);
         }
     }
 
-    private void buildCeilingIfNeeded(World w, int x, int y, int z){
-        Block b = w.getBlock(x, y, z);
-        if (b instanceof BlockSand || b instanceof BlockGravel || b instanceof BlockSoulSand) {
-            w.setBlock(x, y, z, Blocks.fence);
+    private void buildCeiling(World w, int x, int y, int z){
+        if (isFallingBlock(w, x, y, z)) {
+            if (isFallingBlock(w, x, y+1, z)){
+                w.setBlock(x, y, z, Blocks.fence);
+            } else {
+                w.setBlock(x, y, z, Blocks.dirt);
+            }
+
         }
+
+
     }
 
     private void generateCrossroad(World w, int cx, int y, int cz){
-        int x = (cx * 16) + 7;
-        int z = (cz * 16) + 7;
-        int c = y + 2; // ceiling
-        int h = y + 1; // head y level
+        int x = (cx * 16) + 8;
+        int z = (cz * 16) + 8;
 
         if (noWater(w, x, y, z)) {
-            buildCeilingIfNeeded(w, x, c, z);
-            w.setBlock(x, h, z, Blocks.air);
-            w.setBlock(x, y, z, Blocks.stone_slab);
+            buildCeiling(w, x, y+3, z);
+            w.setBlock(     x, y+2, z, Blocks.air);
+            w.setBlock(     x, y+1, z, Blocks.air);
+            w.setBlock(     x, y+0, z, Blocks.stone_slab);
 
             // and clean up some space around
-            buildCeilingIfNeeded(w, x-1, c, z-1);
-            w.setBlock(x-1, h, z-1, Blocks.air);
-            w.setBlock(x-1, y, z-1, Blocks.air);
+            buildCeiling(w, x-1, y+3, z-1);
+            w.setBlock(     x-1, y+2, z-1, Blocks.air);
+            w.setBlock(     x-1, y+1, z-1, Blocks.air);
+            w.setBlock(     x-1, y+0, z-1, Blocks.air);
 
-            buildCeilingIfNeeded(w, x+1, c, z-1);
-            w.setBlock(x+1, h, z-1, Blocks.air);
-            w.setBlock(x+1, y, z-1, Blocks.air);
+            buildCeiling(w, x+1, y+3, z-1);
+            w.setBlock(     x+1, y+2, z-1, Blocks.air);
+            w.setBlock(     x+1, y+1, z-1, Blocks.air);
+            w.setBlock(     x+1, y+0, z-1, Blocks.air);
 
-            buildCeilingIfNeeded(w, x-1, c, z+1);
-            w.setBlock(x-1, h, z+1, Blocks.air);
-            w.setBlock(x-1, y, z+1, Blocks.air);
+            buildCeiling(w, x-1, y+3, z+1);
+            w.setBlock(     x-1, y+2, z+1, Blocks.air);
+            w.setBlock(     x-1, y+1, z+1, Blocks.air);
+            w.setBlock(     x-1, y+0, z+1, Blocks.air);
 
-            buildCeilingIfNeeded(w, x+1, c, z+1);
-            w.setBlock(x+1, h, z+1, Blocks.air);
-            w.setBlock(x+1, y, z+1, Blocks.air);
+            buildCeiling(w, x+1, y+3, z+1);
+            w.setBlock(     x+1, y+2, z+1, Blocks.air);
+            w.setBlock(     x+1, y+1, z+1, Blocks.air);
+            w.setBlock(     x+1, y+0, z+1, Blocks.air);
+
+            if (Config.build_beacons == true){
+                int ty = w.getTopSolidOrLiquidBlock(x,z);
+                for (int good_y = ty+1; good_y > Config.depth + 2; good_y--) {
+                    if (World.doesBlockHaveSolidTopSurface(w, x, good_y, z)){
+                        w.setBlock(x, good_y+1, z, Blocks.lit_pumpkin);
+                        break;
+                    }
+                }
+            }
         }
 
     }
 
-    private void generateTracks(World w, int x, int y, int z){
+    private void generateTracks(World w, int x, int y, int z, boolean generate_pumpkin, boolean generate_booster){
         if (noWater(w, x, y, z)) {
-            if (x % 10 == 0 || z % 10 == 0) { // every 10 blocks place the light
+            if (generate_pumpkin) {
                 w.setBlock(x, y - 1, z, Blocks.lit_pumpkin);
             }
             if (!(World.doesBlockHaveSolidTopSurface(w, x, y - 1, z))) {
                 w.setBlock(x, y - 1, z, Blocks.cobblestone);
             }
-            buildCeilingIfNeeded(w, x, y + 2, z);
+            buildCeiling(w, x, y + 3, z);
+            w.setBlock(x, y + 2, z, Blocks.air);
             w.setBlock(x, y + 1, z, Blocks.air);
-            w.setBlock(x, y, z, Blocks.rail);
+
+            if (Config.booster_frequency > 0 && generate_booster) {
+                w.setBlock(x, y - 1, z, Blocks.redstone_block);
+                w.setBlock(x, y, z, Blocks.golden_rail);
+            } else {
+                w.setBlock(x, y, z, Blocks.rail);
+            }
+
         }
     }
 
     private boolean noWater(World w, int x, int y, int z){
-        for (int l = y; l <= y + 2; l++) {
+        for (int l = y - 1; l <= y + 2; l++) {
             // don't generate in the water or lava
             if (w.getBlock(x, l, z) instanceof BlockLiquid) {
                 return false;
             }
         }
         return true;
+    }
+
+
+    private boolean isFallingBlock(World w, int x, int y, int z){
+        Block b = w.getBlock(x,y,z);
+        return (b instanceof BlockFalling || b instanceof BlockLiquid);
     }
 }
