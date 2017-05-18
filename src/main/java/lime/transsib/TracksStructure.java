@@ -29,18 +29,18 @@ public class TracksStructure extends WorldGenerator
     }
 
     private boolean isValidXChunk(BlockPos c_pos){
-        return (c_pos.getX() == 0 || c_pos.getX() % Config.frequency == 0);
+        return (c_pos.getX() == 0 || c_pos.getX() % Config.tunnel_frequency == 0);
     }
 
     private boolean isValidZChunk(BlockPos c_pos){
-        return (c_pos.getZ() == 0 || c_pos.getZ() % Config.frequency == 0);
+        return (c_pos.getZ() == 0 || c_pos.getZ() % Config.tunnel_frequency == 0);
     }
 
     private void generateXChunk(World w, BlockPos c_pos){
         int x = c_pos.getX() * 16;
         int z = c_pos.getZ() * 16;
         for (int tz = z; tz <= z + 16; tz++) {
-            generateTracks(w, new BlockPos(x+8, c_pos.getY(), tz));
+            generateTracks(w, new BlockPos(x+8, c_pos.getY(), tz), tz % Config.pumpkin_frequency == 0, Config.booster_frequency > 0 && tz % Config.booster_frequency == 0);
         }
     }
 
@@ -48,7 +48,7 @@ public class TracksStructure extends WorldGenerator
         int x = c_pos.getX() * 16;
         int z = c_pos.getZ() * 16;
         for (int tx = x; tx <= x + 16; tx++) {
-            generateTracks(w, new BlockPos(tx, c_pos.getY(), z+8));
+            generateTracks(w, new BlockPos(tx, c_pos.getY(), z+8), tx % Config.pumpkin_frequency == 0, Config.booster_frequency > 0 && tx % Config.booster_frequency == 0);
         }
     }
 
@@ -117,9 +117,9 @@ public class TracksStructure extends WorldGenerator
         return w.getBlockState(pos.down()).isSideSolid(w, pos.down(), EnumFacing.UP);
     }
 
-    private void generateTracks(World w, BlockPos pos){
+    private void generateTracks(World w, BlockPos pos, boolean generate_pumpkin, boolean generate_booster){
         if (noWater(w, pos)) {
-            if (pos.getX() % 10 == 0 || pos.getZ() % 10 == 0) { // every 10 blocks place the light
+            if (generate_pumpkin) {
                 w.setBlockState(pos.down(), Blocks.LIT_PUMPKIN.getDefaultState());
             }
 
@@ -130,7 +130,7 @@ public class TracksStructure extends WorldGenerator
             w.setBlockToAir(pos.up(2));
             w.setBlockToAir(pos.up(1));
 
-            if (Config.booster_frequency > 0 && (pos.getX() % Config.booster_frequency == 0 || pos.getZ() % Config.booster_frequency == 0)) { // every N blocks place the light
+            if (generate_booster) {
                 w.setBlockState(pos.down(), Blocks.REDSTONE_BLOCK.getDefaultState());
                 w.setBlockState(pos, Blocks.GOLDEN_RAIL.getDefaultState());
             } else {
@@ -143,6 +143,7 @@ public class TracksStructure extends WorldGenerator
         if (w.getBlockState(pos.up(2)).getBlock() instanceof BlockLiquid) {return false;}
         if (w.getBlockState(pos.up(1)).getBlock() instanceof BlockLiquid) {return false;}
         if (w.getBlockState(pos.up(0)).getBlock() instanceof BlockLiquid) {return false;}
+        if (w.getBlockState(pos.down()).getBlock() instanceof BlockLiquid) {return false;}
         return true;
     }
 }
