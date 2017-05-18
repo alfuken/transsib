@@ -14,7 +14,7 @@ import java.io.File;
 public class Transsib
 {
     public static final String MODID = "transsib";
-    public static final String VERSION = "1.11.2-1";
+    public static final String VERSION = "1.11.2-2";
 
     public static Logger logger;
     public static Configuration config;

@@ -40,7 +40,7 @@ public class TracksStructure extends WorldGenerator
         int x = c_pos.getX() * 16;
         int z = c_pos.getZ() * 16;
         for (int tz = z; tz <= z + 16; tz++) {
-            generateTracks(w, new BlockPos(x+7, c_pos.getY(), tz));
+            generateTracks(w, new BlockPos(x+8, c_pos.getY(), tz));
         }
     }
 
@@ -48,45 +48,73 @@ public class TracksStructure extends WorldGenerator
         int x = c_pos.getX() * 16;
         int z = c_pos.getZ() * 16;
         for (int tx = x; tx <= x + 16; tx++) {
-            generateTracks(w, new BlockPos(tx, c_pos.getY(), z+7));
+            generateTracks(w, new BlockPos(tx, c_pos.getY(), z+8));
         }
     }
 
     private void generateCrossroad(World w, BlockPos c_pos){
-        BlockPos pos = new BlockPos((c_pos.getX() * 16)+7, c_pos.getY(), (c_pos.getZ() * 16)+7);
+        BlockPos pos = new BlockPos((c_pos.getX() * 16)+8, c_pos.getY(), (c_pos.getZ() * 16)+8);
         if (noWater(w, pos)) {
 
             // build center
-            buildCeiling(w, pos.up(2));
+            buildCeiling(w, pos.up(3));
+            w.setBlockToAir(pos.up(2));
             w.setBlockToAir(pos.up(1));
             w.setBlockState(pos, Blocks.STONE_SLAB.getDefaultState());
 
             // and clean up some space around
-            buildCeiling(w, pos.add(-1, +2, -1));
+            buildCeiling(w, pos.add(-1, +3, -1));
+            w.setBlockToAir(pos.add(-1, +2, -1));
             w.setBlockToAir(pos.add(-1, +1, -1));
             w.setBlockToAir(pos.add(-1, +0, -1));
 
-            buildCeiling(w, pos.add(+1, +2, -1));
+            buildCeiling(w, pos.add(+1, +3, -1));
+            w.setBlockToAir(pos.add(+1, +2, -1));
             w.setBlockToAir(pos.add(+1, +1, -1));
             w.setBlockToAir(pos.add(+1, +0, -1));
 
-            buildCeiling(w, pos.add(+1, +2, +1));
+            buildCeiling(w, pos.add(+1, +3, +1));
+            w.setBlockToAir(pos.add(+1, +2, +1));
             w.setBlockToAir(pos.add(+1, +1, +1));
             w.setBlockToAir(pos.add(+1, +0, +1));
 
-            buildCeiling(w, pos.add(-1, +2, +1));
+            buildCeiling(w, pos.add(-1, +3, +1));
+            w.setBlockToAir(pos.add(-1, +2, +1));
             w.setBlockToAir(pos.add(-1, +1, +1));
             w.setBlockToAir(pos.add(-1, +0, +1));
+
+            // build a crossroad beacon
+            if (Config.build_beacons){
+                BlockPos p = w.getTopSolidOrLiquidBlock(pos);
+                if (canPlaceRails(w, p)){
+                    w.setBlockState(p, Blocks.LIT_PUMPKIN.getDefaultState());
+                }
+            }
+
 
         }
 
     }
 
-    private void buildCeiling(World w, BlockPos pos){
+    private boolean isFallingBlock(World w, BlockPos pos){
         Block b = w.getBlockState(pos).getBlock();
-        if (b instanceof BlockSand || b instanceof BlockGravel || b instanceof BlockSoulSand) {
-            w.setBlockState(pos, Blocks.OAK_FENCE.getDefaultState());
+        return (b instanceof BlockFalling || b instanceof BlockLiquid);
+    }
+
+    // only built if needed
+    private void buildCeiling(World w, BlockPos pos){
+        if (isFallingBlock(w, pos)) {
+            if (isFallingBlock(w, pos.up(1))){
+                w.setBlockState(pos, Blocks.OAK_FENCE.getDefaultState());
+            } else {
+                w.setBlockState(pos, Blocks.DIRT.getDefaultState());
+            }
+
         }
+    }
+
+    private boolean canPlaceRails(World w, BlockPos pos){
+        return w.getBlockState(pos.down()).isSideSolid(w, pos.down(), EnumFacing.UP);
     }
 
     private void generateTracks(World w, BlockPos pos){
@@ -95,12 +123,19 @@ public class TracksStructure extends WorldGenerator
                 w.setBlockState(pos.down(), Blocks.LIT_PUMPKIN.getDefaultState());
             }
 
-            if (!(w.getBlockState(pos.down()).isSideSolid(w, pos.down(), EnumFacing.UP))) {
+            if (!canPlaceRails(w, pos)) {
                 w.setBlockState(pos.down(), Blocks.COBBLESTONE.getDefaultState());
             }
-            buildCeiling(w, pos.up(2));
-            w.setBlockToAir(pos.up());
-            w.setBlockState(pos, Blocks.RAIL.getDefaultState());
+            buildCeiling(w, pos.up(3));
+            w.setBlockToAir(pos.up(2));
+            w.setBlockToAir(pos.up(1));
+
+            if (Config.booster_frequency > 0 && (pos.getX() % Config.booster_frequency == 0 || pos.getZ() % Config.booster_frequency == 0)) { // every N blocks place the light
+                w.setBlockState(pos.down(), Blocks.REDSTONE_BLOCK.getDefaultState());
+                w.setBlockState(pos, Blocks.GOLDEN_RAIL.getDefaultState());
+            } else {
+                w.setBlockState(pos, Blocks.RAIL.getDefaultState());
+            }
         }
     }
 
